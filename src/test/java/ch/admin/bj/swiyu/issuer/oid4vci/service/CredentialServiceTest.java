@@ -6,6 +6,15 @@
 
 package ch.admin.bj.swiyu.issuer.oid4vci.service;
 
+import java.time.Instant;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
+
 import ch.admin.bj.swiyu.issuer.oid4vci.common.config.ApplicationProperties;
 import ch.admin.bj.swiyu.issuer.oid4vci.common.config.OpenIdIssuerConfiguration;
 import ch.admin.bj.swiyu.issuer.oid4vci.common.exception.OAuthException;
@@ -18,15 +27,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class CredentialServiceTest {
@@ -43,10 +43,48 @@ public class CredentialServiceTest {
     private OpenIdIssuerConfiguration openIdIssuerConfiguration;
 
     @Test
+    public void givenExpiredToken_whenGetCredential_thenThrowOAuthException() throws OAuthException {
+        // Given
+        var service = new CredentialService(credentialOfferRepository, issuerMetadata, vcFormatFactory, applicationProperties, null, openIdIssuerConfiguration);
+        var uuid = UUID.randomUUID();
+        var offerData = new HashMap<String, Object>() {{
+            put("data", "data");
+            put("otherStuff", "data");
+        }};
+
+        var offer = new CredentialOffer(
+                UUID.randomUUID(),
+                CredentialStatus.IN_PROGRESS,
+                Collections.emptyList(),
+                offerData,
+                new HashMap<>(),
+                uuid,
+                Instant.now().minusSeconds(600).getEpochSecond(), // expired access token,
+                UUID.randomUUID(),
+                uuid,
+                Instant.now().plusSeconds(600).getEpochSecond(),
+                Instant.now(),
+                Instant.now(),
+                null
+        );
+
+
+        when(credentialOfferRepository.findByAccessToken(uuid)).thenReturn(Optional.of(offer));
+
+        // WHEN credential is created for offer with expired timestamp
+        var ex = assertThrows(OAuthException.class, () -> service.createCredential(CredentialRequest.builder().build(), uuid.toString()));
+
+        // THEN Status is changed and offer data is cleared
+        assertEquals("INVALID_REQUEST", ex.getError().toString());
+        assertEquals("AccessToken expired.", ex.getMessage());
+    }
+
+    @Test
     public void givenExpiredOffer_whenCredentialIsCreated_throws() {
         // GIVEN
         var service = new CredentialService(credentialOfferRepository, issuerMetadata, vcFormatFactory, applicationProperties, null, openIdIssuerConfiguration);
         var uuid = UUID.randomUUID();
+        var preAuthorizedCode = UUID.randomUUID();
         var offerData = new HashMap<String, Object>() {{
             put("data", "data");
             put("otherStuff", "data");
@@ -56,9 +94,11 @@ public class CredentialServiceTest {
                 CredentialStatus.OFFERED,
                 Collections.emptyList(),
                 offerData,
+                new HashMap<>(),
                 uuid,
                 Instant.now().plusSeconds(600).getEpochSecond(),
                 UUID.randomUUID(),
+                preAuthorizedCode,
                 120,
                 Instant.now(),
                 Instant.now(),
@@ -86,19 +126,21 @@ public class CredentialServiceTest {
             put("otherStuff", "data");
         }};
         var offer = new CredentialOffer(
-                uuid,
+                UUID.randomUUID(),
                 CredentialStatus.OFFERED,
                 Collections.emptyList(),
                 offerData,
+                new HashMap<>(),
                 UUID.randomUUID(),
                 Instant.now().plusSeconds(600).getEpochSecond(),
                 UUID.randomUUID(),
+                uuid,
                 120,
                 Instant.now(),
                 Instant.now(),
                 null
         );
-        when(credentialOfferRepository.findById(uuid)).thenReturn(Optional.of(offer));
+        when(credentialOfferRepository.findByPreAuthorizedCode(uuid)).thenReturn(Optional.of(offer));
 
         // WHEN credential is created for offer with expired timestamp
         var ex = assertThrows(OAuthException.class, () -> service.issueOAuthToken(uuid.toString()));

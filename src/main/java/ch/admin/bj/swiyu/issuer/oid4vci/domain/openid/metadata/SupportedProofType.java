@@ -8,6 +8,7 @@ package ch.admin.bj.swiyu.issuer.oid4vci.domain.openid.metadata;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Data
 public class SupportedProofType {
-    @JsonProperty("proof_signing_alg_values_supported")
-    List<String> supportedSigningAlgorithms;
+    @JsonProperty(value = "proof_signing_alg_values_supported")
+    List<@Pattern(regexp = "^ES256$", message = "Only ES256 is supported for holder binding proofs") String> supportedSigningAlgorithms;
 
 }

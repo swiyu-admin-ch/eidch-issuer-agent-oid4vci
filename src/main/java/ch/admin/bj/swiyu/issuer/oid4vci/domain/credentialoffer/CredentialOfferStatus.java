@@ -6,13 +6,7 @@
 
 package ch.admin.bj.swiyu.issuer.oid4vci.domain.credentialoffer;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,12 +24,14 @@ public class CredentialOfferStatus {
 
     @ManyToOne
     @MapsId("offerId")
-    @JoinColumn(name = "credential_offer_id", referencedColumnName = "id")
+    @JoinColumn(name = "credential_offer_id", referencedColumnName = "id", updatable = false)
+    // We have no reason to propagate the update, as there *should* be no use case for this
     private CredentialOffer offer;
 
     @ManyToOne
     @MapsId("statusListId")
-    @JoinColumn(name = "status_list_id", referencedColumnName = "id")
+    @JoinColumn(name = "status_list_id", referencedColumnName = "id", updatable = false)
+    // We have no reason to propagate the update, as there *should* be no use case for this
     private StatusList statusList;
 
     @Column

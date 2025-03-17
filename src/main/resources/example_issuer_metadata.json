@@ -1,6 +1,6 @@
 {
   "credential_issuer": "${external-url}",
-  "credential_endpoint": "${external-url}/credential",
+  "credential_endpoint": "${external-url}/api/v1/credential",
   "credential_response_encryption": {
     "encryption_required": false,
     "alg_values_supported": [
@@ -37,8 +37,7 @@
       "proof_types_supported": {
         "jwt": {
           "proof_signing_alg_values_supported": [
-            "ES256",
-            "ES512"
+            "ES256"
           ]
         }
       },
@@ -103,11 +102,13 @@
       "credential_signing_alg_values_supported": [
         "ES256"
       ],
+      "cryptographic_binding_methods_supported": [
+        "did:jwk"
+      ],
       "proof_types_supported": {
         "jwt": {
           "proof_signing_alg_values_supported": [
-            "ES256",
-            "ES512"
+            "ES256"
           ]
         }
       },
@@ -151,9 +152,6 @@
       "format": "vc+sd-jwt",
       "credential_signing_alg_values_supported": [
         "ES256"
-      ],
-      "cryptographic_binding_methods_supported": [
-        "did:tdw"
       ],
       "vct": "unbound_example_sd_jwt",
       "claims": {

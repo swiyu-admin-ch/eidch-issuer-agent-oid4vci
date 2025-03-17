@@ -20,14 +20,25 @@ application:
   # DID of the Issuer
   issuer-id: "${ISSUER_ID}"
   template-replacement: # Hash Map of Values replaced in the templating
-    external-url: "${EXTERNAL_URL}" # URL under which this service can be reached from the web
+    external-url: "${EXTERNAL_URL:}" # URL under which this service can be reached from the web
   token-ttl: 600
   # JSON file holding OpenID Connect configuration
-  #eg:  openid_file: "file:///data/openid.json"
-  openid-file: "${OPENID_CONFIG_FILE}"
+  #eg:  openid_file: "file:///data/example_openid.json"
+  openid-file: "${OPENID_CONFIG_FILE:}"
   # JSON file holding OpenID4VCI Metadata configuration
   #eg:  openid_file: "file:///data/myapplication_metadata.json"
-  metadata-file: "${METADATA_CONFIG_FILE}"
+  metadata-file: "${METADATA_CONFIG_FILE:}"
+
+  # Verification of Key Binding Proof issue at time window
+  acceptable-proof-time-window-seconds: ${VERIFICATION_PROOF_TIME_WINDOW_MS:120}
+
+  # map of vct metadata files. They key will become part of the url
+  #  vct-metadata-files:
+  # map of json schema files, eg referenced in vct metadata. They key will become part of the url
+  #  json-schema-metadata-files:
+  # map of overlays capture architecture jsons. They key will become part of the url
+  #  overlays-capture-architecture-metadata-files:
+
   # List of Json Web Keys which are whitelisted to have signed the offer data
   data-integrity-jwks: ${JWKS_ALLOWLIST}
   key:
@@ -78,8 +89,14 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info
+        include: health, info, prometheus
 
 logging:
   level:
     ch.admin.bj.swiyu.issuer.oid4vci.infrastructure.logging.RequestLoggingFilter: DEBUG
+
+monitoring:
+  basic-auth:
+    enabled: ${MONITORING_BASIC_AUTH_ENABLED:false}
+    username: "${MONITORING_BASIC_AUTH_USERNAME:}"
+    password: "${MONITORING_BASIC_AUTH_PASSWORD:}"

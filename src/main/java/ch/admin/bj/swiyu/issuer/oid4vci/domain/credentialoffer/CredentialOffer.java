@@ -6,27 +6,20 @@
 
 package ch.admin.bj.swiyu.issuer.oid4vci.domain.credentialoffer;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.CascadeType;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "credential_offer")
@@ -53,17 +46,23 @@ public class CredentialOffer {
      */
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> offerData;
+    /**
+     * VC Type specific metadata which is dynamically provisioned.
+     * For example vct#integrity for SD-JWT VC.
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> credentialMetadata;
     private UUID accessToken;
     @NotNull
     private Long tokenExpirationTimestamp;
     private UUID nonce;
+    private UUID preAuthorizedCode;
     @NotNull
     private long offerExpirationTimestamp;
     private Instant credentialValidFrom;
     private Instant credentialValidUntil;
 
     @OneToMany(mappedBy = "offer")
-    @Cascade(CascadeType.ALL)
     private Set<CredentialOfferStatus> offerStatusSet;
 
     public void markAsIssued() {
@@ -89,5 +88,9 @@ public class CredentialOffer {
 
     public boolean hasExpirationTimeStampPassed() {
         return Instant.now().isAfter(Instant.ofEpochSecond(this.offerExpirationTimestamp));
+    }
+
+    public boolean hasTokenExpirationPassed() {
+        return this.tokenExpirationTimestamp != null && Instant.now().isAfter(Instant.ofEpochSecond(this.tokenExpirationTimestamp));
     }
 }

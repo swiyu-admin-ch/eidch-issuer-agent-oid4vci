@@ -21,10 +21,6 @@ public class OpenApiConfig {
         return new OpenAPI().info(new io.swagger.v3.oas.models.info.Info()
                 .title("Issuer OID4VCI service")
                 .description("Generic Issuer OID4VCI service")
-                .contact(new io.swagger.v3.oas.models.info.Contact()
-                        .name("e-ID - Team Tergum")
-                        .email("eid@bit.admin.ch")
-                )
         );
     }
 

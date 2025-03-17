@@ -1,4 +1,0 @@
-{
-  "issuer": "${external-url}",
-  "token_endpoint": "${external-url}/token"
-}

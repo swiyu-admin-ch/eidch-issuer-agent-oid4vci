@@ -14,11 +14,7 @@ import ch.admin.bj.swiyu.issuer.oid4vci.domain.openid.metadata.IssuerMetadataTec
 import com.authlete.sd.Disclosure;
 import com.authlete.sd.SDJWT;
 import com.authlete.sd.SDObjectBuilder;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.*;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +23,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static ch.admin.bj.swiyu.issuer.oid4vci.common.exception.CredentialRequestError.INVALID_PROOF;
 import static ch.admin.bj.swiyu.issuer.oid4vci.common.utils.TimeUtils.getUnixTimeStamp;
@@ -54,6 +51,8 @@ public class SdJwtCredential extends CredentialBuilder {
         // Get first entry because we expect the list to only contain one item
         var metadataId = getMetadataCredentialsSupportedIds().getFirst();
         builder.putClaim("vct", getIssuerMetadata().getCredentialConfigurationById(metadataId).getVct());
+        // if we have a vct#integrity, add it
+        Optional.ofNullable(getCredentialOffer().getCredentialMetadata().get("vct#integrity")).ifPresent(o -> builder.putClaim("vct#integrity", o));
         builder.putClaim("iat", getUnixTimeStamp());
 
         // optional field -> only added when set

@@ -7,12 +7,10 @@
 package ch.admin.bj.swiyu.issuer.oid4vci.infrastructure.web.controller;
 
 import ch.admin.bj.swiyu.issuer.oid4vci.api.OAuthTokenDto;
-import ch.admin.bj.swiyu.issuer.oid4vci.api.OpenIdConfigurationDto;
-import ch.admin.bj.swiyu.issuer.oid4vci.common.config.OpenIdIssuerConfiguration;
 import ch.admin.bj.swiyu.issuer.oid4vci.common.exception.OAuthException;
 import ch.admin.bj.swiyu.issuer.oid4vci.domain.openid.credentialrequest.CredentialRequest;
-import ch.admin.bj.swiyu.issuer.oid4vci.infrastructure.web.config.OpenIdIssuerApiConfiguration;
 import ch.admin.bj.swiyu.issuer.oid4vci.service.CredentialService;
+import io.micrometer.core.annotation.Timed;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
@@ -21,16 +19,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -38,6 +28,7 @@ import java.util.regex.Pattern;
  * <p>
  * Implements the OpenID4VCI defined endpoints
  * <a href="https://openid.github.io/OpenID4VCI/openid-4-verifiable-credential-issuance-wg-draft.html">OID4VCI Spec</a>
+ * </p>
  */
 @RestController
 @AllArgsConstructor
@@ -47,8 +38,6 @@ import java.util.regex.Pattern;
 public class IssuanceController {
     private static final String OID4VCI_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:pre-authorized_code";
 
-    private final OpenIdIssuerApiConfiguration openIDConfigurationDto;
-    private final OpenIdIssuerConfiguration openIDConfiguration;
     private final CredentialService credentialService;
 
     /**
@@ -59,6 +48,7 @@ public class IssuanceController {
      * @param preAuthCode single use code to get the token
      * @return OAuth Token or raises an exception
      */
+    @Timed
     @PostMapping(value = {"/token"},
             produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Collect Bearer token with pre-authorized code")
@@ -72,28 +62,7 @@ public class IssuanceController {
         return credentialService.issueOAuthToken(preAuthCode);
     }
 
-    /**
-     * General information about the issuer
-     *
-     * @return OpenIdConfigurationDto as defined by OIDConnect and extended by OID4VCI
-     */
-    @GetMapping(value = {"/.well-known/openid-configuration"})
-    @Operation(summary = "OpenID Connect information required for issuing VCs")
-    public OpenIdConfigurationDto getOpenIDConfiguration() throws IOException {
-        return openIDConfigurationDto.getOpenIdConfiguration();
-    }
-
-    /**
-     * Data concerning OpenID4VC Issuance
-     *
-     * @return Issuer Metadata as defined by OID4VCI
-     */
-    @GetMapping(value = {"/.well-known/openid-credential-issuer"})
-    @Operation(summary = "Information about credentials which can be issued.")
-    public Map<String, Object> getIssuerMetadata() throws IOException {
-        return openIDConfiguration.getIssuerMetadata();
-    }
-
+    @Timed
     @PostMapping(value = {"/credential"}, produces = {MediaType.APPLICATION_JSON_VALUE, "application/jwt"})
     @Operation(summary = "Collect credential associated with the bearer token with the requested credential properties.")
     public ResponseEntity<String> createCredential(

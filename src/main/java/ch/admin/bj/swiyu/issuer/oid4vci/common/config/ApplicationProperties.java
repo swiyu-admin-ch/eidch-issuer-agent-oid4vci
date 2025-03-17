@@ -6,14 +6,15 @@
 
 package ch.admin.bj.swiyu.issuer.oid4vci.common.config;
 
+import java.text.ParseException;
+import java.util.Map;
+
 import com.nimbusds.jose.jwk.JWKSet;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-
-import java.text.ParseException;
-import java.util.Map;
 
 @Configuration
 @ConfigurationProperties(prefix = "application")
@@ -26,12 +27,22 @@ public class ApplicationProperties {
      */
     @NotNull
     private Map<String, String> templateReplacement;
+    @Nullable
+    private Map<String, String> vctMetadataFiles;
+    @Nullable
+    private Map<String, String> jsonSchemaMetadataFiles;
+    @Nullable
+    private Map<String, String> overlaysCaptureArchitectureMetadataFiles;
+
 
     @NotNull
     private String issuerId;
 
     @NotNull
     private long tokenTTL;
+
+    @NotNull
+    private int acceptableProofTimeWindowSeconds;
 
     private String dataIntegrityJwks;
 

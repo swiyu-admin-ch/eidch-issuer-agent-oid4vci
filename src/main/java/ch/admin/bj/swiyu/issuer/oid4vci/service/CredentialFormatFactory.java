@@ -25,7 +25,7 @@ public class CredentialFormatFactory {
 
     /**
      * Get the credential format builder for the given configuration identifier.
-     * All values are allowed which are present in resources/issuer_metadata.json file
+     * All values are allowed which are present in resources/example_issuer_metadata.json file
      *
      * @param configurationIdentifier unique identifier for credential profile
      */

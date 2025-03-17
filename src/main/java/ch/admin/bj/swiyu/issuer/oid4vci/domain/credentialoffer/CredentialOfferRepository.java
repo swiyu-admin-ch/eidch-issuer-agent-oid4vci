@@ -16,9 +16,9 @@ import java.util.UUID;
 
 @Repository
 public interface CredentialOfferRepository extends JpaRepository<CredentialOffer, UUID> {
-    @Override
+    
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<CredentialOffer> findById(UUID uuid);
+    Optional<CredentialOffer> findByPreAuthorizedCode(UUID uuid);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<CredentialOffer> findByAccessToken(UUID accessToken);

@@ -20,10 +20,10 @@ spring:
 
 application:
   external-url: "http://localhost:8080"
-  #  openid_file: "file:///data/openid.json"
+  #  openid_file: "file:///data/example_openid.json"
   issuer-id: "did:example:localhost%3A8080:abcabc"
-  openid-file: "classpath:openid.json"
-  metadata-file: "classpath:issuer_metadata.json"
+  openid-file: "classpath:example_openid.json"
+  metadata-file: "classpath:example_issuer_metadata.json"
   key:
     sdjwt:
       private-key: "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIDqMm9PvL4vpyFboAwaeViQsH30CkaDcVtRniZPezFxpoAoGCCqGSM49\nAwEHoUQDQgAEQgjeqGSdu+2jq8+n78+6fXk2Yh22lQKBYCnu5FWPvKtat3wFEsQX\nqNHYgPXBxWmOBw5l2PE/gUDUJqGJSc1LuQ==\n-----END EC PRIVATE KEY-----"

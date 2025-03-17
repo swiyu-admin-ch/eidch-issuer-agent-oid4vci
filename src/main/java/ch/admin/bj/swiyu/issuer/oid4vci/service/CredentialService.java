@@ -6,6 +6,13 @@
 
 package ch.admin.bj.swiyu.issuer.oid4vci.service;
 
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
+
+import static ch.admin.bj.swiyu.issuer.oid4vci.common.exception.CredentialRequestError.INVALID_PROOF;
+import static ch.admin.bj.swiyu.issuer.oid4vci.common.exception.CredentialRequestError.UNSUPPORTED_CREDENTIAL_FORMAT;
+
 import ch.admin.bj.swiyu.issuer.oid4vci.api.CredentialEnvelopeDto;
 import ch.admin.bj.swiyu.issuer.oid4vci.api.OAuthTokenDto;
 import ch.admin.bj.swiyu.issuer.oid4vci.common.config.ApplicationProperties;
@@ -22,13 +29,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
-
-import static ch.admin.bj.swiyu.issuer.oid4vci.common.exception.CredentialRequestError.INVALID_PROOF;
-import static ch.admin.bj.swiyu.issuer.oid4vci.common.exception.CredentialRequestError.UNSUPPORTED_CREDENTIAL_FORMAT;
 
 @Service
 @AllArgsConstructor
@@ -53,8 +53,12 @@ public class CredentialService {
 
         // We have to check again that the Credential Status has not been changed to catch race condition between holder & issuer
         if (credentialOffer.getCredentialStatus() != CredentialStatus.IN_PROGRESS) {
-            throw OAuthException.invalidGrant(String.format("Offer is not anymore valid. The current offer state is %s." +
+            throw OAuthException.invalidGrant(String.format("Offer is not valid anymore. The current offer state is %s." +
                     "The user should probably contact the business issuer about this.", credentialOffer.getCredentialStatus()));
+        }
+
+        if (credentialOffer.hasTokenExpirationPassed()) {
+            throw OAuthException.invalidRequest("AccessToken expired.");
         }
 
         var holderKey = getHolderPublicKey(credentialRequest, credentialOffer);
@@ -119,7 +123,7 @@ public class CredentialService {
 
     private CredentialOffer getCredentialOfferByPreAuthCode(String preAuthCode) {
         var uuid = uuidOrException(preAuthCode);
-        return getNonExpiredCredentialOffer(credentialOfferRepository.findById(uuid))
+        return getNonExpiredCredentialOffer(credentialOfferRepository.findByPreAuthorizedCode(uuid))
                 .orElseThrow(() -> OAuthException.invalidGrant("Invalid preAuthCode"));
     }
 
@@ -153,7 +157,7 @@ public class CredentialService {
         // Process Holder Binding if a Proof Type is required
         var proofTypes = credentialConfiguration.getProofTypesSupported();
         if (proofTypes != null && !proofTypes.isEmpty()) {
-            var requestProof = credentialRequest.getProof().orElseThrow(
+            var requestProof = credentialRequest.getProof(applicationProperties.getAcceptableProofTimeWindowSeconds()).orElseThrow(
                     () -> new Oid4vcException(INVALID_PROOF, "Proof must be provided for the requested credential"));
             var bindingProofType = Optional.of(proofTypes.get(requestProof.proofType.toString())).orElseThrow(() ->
                     new Oid4vcException(INVALID_PROOF, "Provided proof is not supported for the credential requested."));

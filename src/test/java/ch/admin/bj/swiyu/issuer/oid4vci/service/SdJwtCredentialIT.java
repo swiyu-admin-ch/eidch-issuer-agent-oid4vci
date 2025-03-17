@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 import static ch.admin.bj.swiyu.issuer.oid4vci.test.CredentialOfferTestData.createTestOffer;
 import static ch.admin.bj.swiyu.issuer.oid4vci.test.JwtTestUtils.getJWTPayload;
@@ -31,6 +32,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("test")
 class SdJwtCredentialIT {
+
+    private final UUID preAuthCode = UUID.randomUUID();
+
     @Autowired
     private CredentialFormatFactory vcFormatFactory;
     @Autowired
@@ -42,7 +46,7 @@ class SdJwtCredentialIT {
     @Test
     void getMinimalSdJwtCredentialTestClaims_thenSuccess() {
 
-        CredentialOffer credentialOffer = createTestOffer(CredentialStatus.OFFERED, "university_example_sd_jwt");
+        CredentialOffer credentialOffer = createTestOffer(preAuthCode, CredentialStatus.OFFERED, "university_example_sd_jwt");
 
         CredentialRequest credentialRequest = CredentialRequest.builder().build();
         credentialRequest.setCredentialResponseEncryption(null);
@@ -80,7 +84,7 @@ class SdJwtCredentialIT {
         Instant now = Instant.now();
         Instant expiration = now.plus(30, ChronoUnit.DAYS);
 
-        var credentialOffer = createTestOffer(CredentialStatus.OFFERED, "university_example_sd_jwt", now, expiration);
+        var credentialOffer = createTestOffer(preAuthCode, CredentialStatus.OFFERED, "university_example_sd_jwt", now, expiration);
 
         CredentialRequest credentialRequest = CredentialRequest.builder().build();
         credentialRequest.setCredentialResponseEncryption(null);
@@ -113,7 +117,7 @@ class SdJwtCredentialIT {
     @Test
     void getSdJwtCredentialTestSD_thenSuccess() {
 
-        var credentialOffer = createTestOffer(CredentialStatus.OFFERED, "university_example_sd_jwt");
+        var credentialOffer = createTestOffer(preAuthCode, CredentialStatus.OFFERED, "university_example_sd_jwt");
 
         CredentialRequest credentialRequest = CredentialRequest.builder().build();
         credentialRequest.setCredentialResponseEncryption(null);

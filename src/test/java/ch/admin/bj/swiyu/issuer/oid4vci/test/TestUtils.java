@@ -6,28 +6,6 @@
 
 package ch.admin.bj.swiyu.issuer.oid4vci.test;
 
-import ch.admin.bj.swiyu.issuer.oid4vci.common.config.SdjwtProperties;
-import ch.admin.bj.swiyu.issuer.oid4vci.domain.openid.credentialrequest.holderbinding.DidJwk;
-import com.authlete.sd.Disclosure;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.JWSVerifier;
-import com.nimbusds.jose.crypto.ECDSASigner;
-import com.nimbusds.jose.crypto.ECDSAVerifier;
-import com.nimbusds.jose.jwk.ECKey;
-import com.nimbusds.jose.jwk.JWK;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
-
 import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
@@ -40,11 +18,28 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import ch.admin.bj.swiyu.issuer.oid4vci.common.config.SdjwtProperties;
+import ch.admin.bj.swiyu.issuer.oid4vci.domain.openid.credentialrequest.holderbinding.DidJwk;
+import com.authlete.sd.Disclosure;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.ECDSASigner;
+import com.nimbusds.jose.crypto.ECDSAVerifier;
+import com.nimbusds.jose.jwk.ECKey;
+import com.nimbusds.jose.jwk.JWK;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+
 public class TestUtils {
-    public static Map<String, Object> fetchOAuthToken(MockMvc mock, String preauthCode) throws Exception {
-        var response = mock.perform(post("/token")
+    public static Map<String, Object> fetchOAuthToken(MockMvc mock, String preAuthCode) throws Exception {
+        var response = mock.perform(post("/api/v1/token")
                         .param("grant_type", "urn:ietf:params:oauth:grant-type:pre-authorized_code")
-                        .param("pre-authorized_code", preauthCode))
+                        .param("pre-authorized_code", preAuthCode))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("expires_in")))
                 .andExpect(content().string(containsString("access_token")))
@@ -54,7 +49,7 @@ public class TestUtils {
     }
 
     public static ResultActions requestCredential(MockMvc mock, String token, String credentialRequestString) throws Exception {
-        return mock.perform(post("/credential")
+        return mock.perform(post("/api/v1/credential")
                 .header("Authorization", String.format("BEARER %s", token))
                 .contentType("application/json")
                 .content(credentialRequestString)
@@ -62,6 +57,10 @@ public class TestUtils {
     }
 
     public static String createHolderProof(ECKey holderPrivateKey, String issuerUri, String nonce, String proofTypeString, boolean useDidJwk) throws JOSEException {
+        return createHolderProof(holderPrivateKey, issuerUri, nonce, proofTypeString, useDidJwk, new Date());
+    }
+
+    public static String createHolderProof(ECKey holderPrivateKey, String issuerUri, String nonce, String proofTypeString, boolean useDidJwk, Date issueTime) throws JOSEException {
         var headerBuilder = new JWSHeader.Builder(JWSAlgorithm.ES256)
                 .type(new JOSEObjectType(proofTypeString));
         if (useDidJwk) {
@@ -74,7 +73,7 @@ public class TestUtils {
         JWTClaimsSet claims = new JWTClaimsSet.Builder()
                 .claim("nonce", nonce)
                 .claim("aud", issuerUri)
-                .issueTime(new Date())
+                .issueTime(issueTime)
                 .build();
         JWSSigner signer = new ECDSASigner(holderPrivateKey);
         SignedJWT jwt = new SignedJWT(header, claims);
@@ -140,4 +139,5 @@ public class TestUtils {
             return false;
         }
     }
+
 }

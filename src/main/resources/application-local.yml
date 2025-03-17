@@ -23,9 +23,21 @@ application:
   issuer-id: "did:example:123456789"
   external-url: "http://localhost:8080"
   token-ttl: 600
-  #  openid-file: "file:///data/openid.json"
-  openid-file: "classpath:openid.json"
-  metadata-file: "classpath:issuer_metadata.json"
+  #  openid-file: "file:///data/example_openid.json"
+  openid-file: "classpath:example_openid.json"
+  metadata-file: "classpath:example_issuer_metadata.json"
+  # vct metadata files. They key will become part of the url
+  vct-metadata-files:
+    my-vct-v01: "classpath:example_vct_metadata.json"
+
+  overlays-capture-architecture-metadata-files:
+    my-overlay-v01: "classpath:example_oca.json"
+  # json schema files, eg referenced in vct metadata. They key will become part of the url
+  json-schema-metadata-files:
+    my-schema-v01: "classpath:example_json_schema.json"
+
   key:
     sdjwt:
       private-key: "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIAs0WyAxFdOvqYML8t2Zy0otWO93eXnR5X1fa09hI6mDoAoGCCqGSM49\nAwEHoUQDQgAEJCe2BrwmpvMHw/J+hx6dGKCtRtv+X5fk8NNCXSSHr9owdxOyIaz9\nplC4UblhP2d7rIi52L4LKqEhp6cliJ5xuw==\n-----END EC PRIVATE KEY-----\n"
+  template-replacement:
+    external-url: "http://localhost:8080"

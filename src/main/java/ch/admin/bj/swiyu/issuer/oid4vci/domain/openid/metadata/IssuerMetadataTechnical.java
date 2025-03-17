@@ -10,8 +10,10 @@ import ch.admin.bj.swiyu.issuer.oid4vci.common.exception.CredentialRequestError;
 import ch.admin.bj.swiyu.issuer.oid4vci.common.exception.Oid4vcException;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.PostConstruct;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.springframework.validation.annotation.Validated;
 
@@ -35,25 +37,23 @@ public class IssuerMetadataTechnical {
      */
     @JsonProperty("credential_endpoint")
     @NotNull
+    @Pattern(regexp = "^.+/credential$", message = "Credential endpoint for this issuer is /credential")
     private String credentialEndpoint;
 
     @JsonProperty("credential_configurations_supported")
     @NotNull
+    @Size(min = 1, message = "At least one credential configuration has to be be provided")
+    @Valid
     private Map<String, CredentialConfiguration> credentialConfigurationSupported;
 
     @JsonProperty("credential_response_encryption")
+    @Valid
     private IssuerCredentialResponseEncryption responseEncryption;
 
     @JsonProperty("version")
     @NotNull
+    @Pattern(regexp = "^1\\.0$", message = "Only version 1.0 is supported")
     private String version;
-
-    @PostConstruct
-    public void validateVersion() {
-        if (!"1.0".equals(version)) {
-            throw new IllegalArgumentException("Version must be 1.0");
-        }
-    }
 
     public @NotNull CredentialConfiguration getCredentialConfigurationById(String credentialConfigurationSupportedId) {
         CredentialConfiguration credentialConfiguration = credentialConfigurationSupported.get(credentialConfigurationSupportedId);

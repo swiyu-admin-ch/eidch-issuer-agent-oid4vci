@@ -28,7 +28,7 @@ public class CredentialRequestProofTypeValidator implements ConstraintValidator<
      */
     @Override
     public boolean isValid(Map<String, Object> proof, ConstraintValidatorContext context) {
-        if (proof == null) {
+        if (proof == null || proof.isEmpty()) {
             // proof entry itself is optional
             return true;
         }

@@ -113,10 +113,14 @@ The Generic Issuer Agent Management is configured using environment variables.
 | DID_SDJWT_VERIFICATION_METHOD  | The full DID with fragment as used to find the public key for sd-jwt VCs in the DID Document. eg: `did:tdw:<base-registry-url>:<issuer_uuid>#<sd-jwt-public-key-fragment>`       |
 | JWKS_ALLOWLIST (Optional)      | A Json Web Key set of the public keys authorized to create the credential subject data.                                                                                          |
 | ENABLE_VAULT                   | Enabling the kubernetes cloud vault to privide private keys to the application                                                                                                   |
+| MONITORING_BASIC_AUTH_ENABLED  | Enables basic auth protection of the /actuator/prometheus endpoint. (Default: false)                                                                                             |
+| MONITORING_BASIC_AUTH_USERNAME | Sets the username for the basic auth protection of the /actuator/prometheus endpoint.                                                                                            |
+| MONITORING_BASIC_AUTH_PASSWORD | Sets the password for the basic auth protection of the /actuator/prometheus endpoint.                                                                                            |
 
 ### Config File Templating
 
-The content of the json files of METADATA_CONFIG_FILE and OPENID_CONFIG_FILE can be annotated with template values.
+The content of the metadata json files, among these METADATA_CONFIG_FILE and OPENID_CONFIG_FILE can be annotated with
+template values.
 By default the external-url can be always used.
 
 ```
@@ -146,6 +150,18 @@ for further information.
 In our deployment we can set the value by adding in the environment variable
 `APPLICATION_TEMPLATEREPLACEMENT_STAGE=dev-`
 
+### Allowed config values
+> The paths specified below are referring to the json structure of the credential issuer metadata as specified in the [OpenID4VP sepcificiation](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-ID1.html#section-11.2.3)
+> 
+| Config path                                                                   | Allowed values                                               | Required | Comment                                                   |
+|-------------------------------------------------------------------------------|--------------------------------------------------------------|----------|-----------------------------------------------------------|
+| credential_response_encryption.alg_values_supported                           | ["RSA-OAEP-256","ECDH-ES+A128KW"]                            | Yes      |                                                           |
+| credential_response_encryption.enc_values_supported                           | ["A128CBC-HS256"]                                            | Yes      |                                                           |
+| version                                                                       | "1.0"                                                        | Yes      |                                                           |
+| credential_configurations_supported.*.format                                  | "vc+sd-jwt"                                                  | Yes      |                                                           |
+| credential_configurations_supported.*.credential_signing_alg_values_supported | ["ES256"]                                                    | Yes      |                                                           |
+| credential_configurations_supported.*.proof_types_supported                   | ``` "jwt": {"proof_signing_alg_values_supported": ["ES256"]} ``` | No       | When set only the exact object shown as sample is allowed |
+| credential_configurations_supported.*.cryptographic_binding_methods_supported | ["did:jwk"]                                                  | No       |                                                           |
 ### Kubernetes Vault Keys
 
 | Variable             | Description                                                                                     |
@@ -177,11 +193,25 @@ Note that for creating the keys it is expected that the public key is provided a
 | HSM_CONFIG_PATH               | File Path to the HSM config file when using [Sun PKCS11 provider](https://docs.oracle.com/en/java/javase/22/security/pkcs11-reference-guide1.html)                                         |
 | HSM_USER_PIN                  | PIN for getting keys from the HSM                                                                                                                                                          |
 
-### Config File Placeholders
+### Metadata provisioning
 
-Issuer Metadata is provided as mounted file. For more convenient deployment this file has a simple placeholder
-replacement.
-`${external-url}` is replaced with the value of the environment variable `$EXTERNAL_URL`
+In some simpler deployments no content delivery network is available to provide credential metadata for things like
+vct (verifiable credential type), json schemas or overlays capture architecture. In this case the desired files can be
+mounted in similar fashion to the issuer metadata.
+A significant difference is though that the file locations are specified ad-hoc with spring environment variables as
+documented in [Config File Templating](#config-file-templating)
+
+Placeholders in these files will be replaced as well.
+
+| Variable Map                                          | Destination                |
+|-------------------------------------------------------|----------------------------|
+| APPLICATION_VCTMETADATAFILES_                         | $EXTERNAL_URL/vct/         |
+| APPLICATION_JSONSCHEMAMETADATAFILES_                  | $EXTERNAL_URL/json-schema/ |
+| APPLICATION_OVERLAYSCAPTUREARCHITECTUREMETADATAFILES_ | $EXTERNAL_URL/oca/         |
+
+For example we could use the file `/cfg-files/vct-test.json` by setting
+`APPLICATION_VCTMETADATAFILES_TESTV1=file:/cfg-files/vct-test.json`.
+The content of vct-test.json will then be available at `$EXTERNAL_URL/vct/testv1`
 
 ### JWT Based Authentication
 

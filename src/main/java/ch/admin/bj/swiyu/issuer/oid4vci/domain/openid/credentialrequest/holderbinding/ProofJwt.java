@@ -6,6 +6,11 @@
 
 package ch.admin.bj.swiyu.issuer.oid4vci.domain.openid.credentialrequest.holderbinding;
 
+import java.text.ParseException;
+import java.time.Instant;
+import java.util.List;
+import java.util.regex.Pattern;
+
 import ch.admin.bj.swiyu.issuer.oid4vci.common.exception.CredentialRequestError;
 import ch.admin.bj.swiyu.issuer.oid4vci.common.exception.Oid4vcException;
 import ch.admin.bj.swiyu.issuer.oid4vci.domain.credentialoffer.CredentialOffer;
@@ -16,25 +21,25 @@ import com.nimbusds.jose.crypto.ECDSAVerifier;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jwt.SignedJWT;
 
-import java.text.ParseException;
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-
 public class ProofJwt extends Proof {
 
     private final String jwt;
+    private final int acceptableProofTimeWindowSeconds;
     private String holderKeyJson;
 
-    private static Oid4vcException proofException(String errorDescription) {
-        return new Oid4vcException(CredentialRequestError.INVALID_PROOF, errorDescription);
+    public ProofJwt(ProofType proofType, String jwt) {
+        this(proofType, jwt, 10);
     }
 
-    public ProofJwt(ProofType proofType, String jwt) {
+    public ProofJwt(ProofType proofType, String jwt, int acceptableProofTimeWindowSeconds) {
         super(proofType);
         this.jwt = jwt;
+        this.acceptableProofTimeWindowSeconds = acceptableProofTimeWindowSeconds;
     }
 
+    /**
+     * Validates the Proof JWT according to <a href="https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0-ID1.html#section-7.2.1.1">OID4VCI 7.2.1.1</a>
+     */
     @Override
     public boolean isValidHolderBinding(String issuerId, List<String> supportedSigningAlgorithms, CredentialOffer offer) {
 
@@ -62,8 +67,16 @@ public class ProofJwt extends Proof {
                 throw proofException("Audience claim is missing or incorrect");
             }
 
+            // iat: REQUIRED (integer or floating-point number). The value of this claim MUST be the time at which the key proof was issued
+            // 12.5 Proof Replay protection with issued at
             if (claimSet.getIssueTime() == null) {
                 throw proofException("Issue Time claim is missing");
+            }
+            var proofIssueTime = signedJWT.getJWTClaimsSet().getIssueTime().toInstant();
+            var now = Instant.now();
+            if (proofIssueTime.isBefore(now.minusSeconds(acceptableProofTimeWindowSeconds))
+                    || proofIssueTime.isAfter(now.plusSeconds(acceptableProofTimeWindowSeconds))) {
+                throw proofException(String.format("Holder Binding proof was not issued at an acceptable time. Expected %d +/- %d seconds", now.getEpochSecond(), acceptableProofTimeWindowSeconds));
             }
 
             ECKey holderKey = getNormalizedECKey(header);
@@ -98,6 +111,10 @@ public class ProofJwt extends Proof {
         return this.holderKeyJson;
     }
 
+    private static Oid4vcException proofException(String errorDescription) {
+        return new Oid4vcException(CredentialRequestError.INVALID_PROOF, errorDescription);
+    }
+
     /**
      * Gets the ECKey from either kid with did or the cnf entry
      *
@@ -105,15 +122,28 @@ public class ProofJwt extends Proof {
      */
     private ECKey getNormalizedECKey(JWSHeader header) {
         var kid = header.getKeyID();
-        if (kid != null && !kid.isEmpty()) {
-            try {
-                return DidJwk.createFromDidJwk(kid).getJWK().toECKey();
-            } catch (ParseException e) {
-                throw proofException(String.format("kid property %s could not be parsed to a JWK", kid));
+
+        // Public key present as did
+        if (kid != null && kid.startsWith("did:")) {
+            var didMatcher = Pattern.compile("did:[a-z]+(?=:.+)").matcher(kid);
+            if (didMatcher.find() && !didMatcher.group().equals("did:jwk")) {
+                throw proofException(String.format("Did method provided in kid attribute %s is not supported", didMatcher.group()));
+            }
+            if (didMatcher.group().equals("did:jwk")) {
+                try {
+                    return DidJwk.createFromDidJwk(kid).getJWK().toECKey();
+                } catch (ParseException e) {
+                    throw proofException(String.format("kid property %s could not be parsed to a JWK", kid));
+                }
             }
         }
-        return Optional.ofNullable(header.getJWK()).orElseThrow(() ->
-                proofException("Missing jwk entry in header.")
-        ).toECKey();
+
+        // Public key is present as jwk
+        if (header.getJWK() != null) {
+            return header.getJWK().toECKey();
+        }
+
+        // No public key present which the current system supports
+        throw proofException(String.format("None of the supported binding method/s was found in the header %s", header));
     }
 }

@@ -26,16 +26,16 @@ import java.util.UUID;
 @UtilityClass
 public class CredentialOfferTestData {
 
-    public static CredentialOffer createTestOffer(UUID offerID, CredentialStatus status, String metadataId) {
-        return createTestOffer(offerID, status, metadataId, Instant.now(), Instant.now().plusSeconds(120));
+    public static CredentialOffer createTestOffer(UUID offerID, UUID preAuthCode, CredentialStatus status, String metadataId) {
+        return createTestOffer(offerID, preAuthCode, status, metadataId, Instant.now(), Instant.now().plusSeconds(120));
     }
 
-    public static CredentialOffer createTestOffer(CredentialStatus status, String metadataId) {
-        return createTestOffer(UUID.randomUUID(), status, metadataId, Instant.now(), Instant.now().plusSeconds(120));
+    public static CredentialOffer createTestOffer(UUID preAuthCode, CredentialStatus status, String metadataId) {
+        return createTestOffer(UUID.randomUUID(), preAuthCode, status, metadataId, Instant.now(), Instant.now().plusSeconds(120));
     }
 
-    public static CredentialOffer createTestOffer(CredentialStatus status, String metadataId, Instant validFrom, Instant validUntil) {
-        return createTestOffer(UUID.randomUUID(), status, metadataId, validFrom, validUntil);
+    public static CredentialOffer createTestOffer(UUID preAuthCode, CredentialStatus status, String metadataId, Instant validFrom, Instant validUntil) {
+        return createTestOffer(UUID.randomUUID(), preAuthCode, status, metadataId, validFrom, validUntil);
     }
 
     public static StatusList createStatusList() {
@@ -53,7 +53,7 @@ public class CredentialOfferTestData {
         );
     }
 
-    public static CredentialOffer createTestOffer(UUID offerID, CredentialStatus status, String metadataId, Instant validFrom, Instant validUntil) {
+    public static CredentialOffer createTestOffer(UUID offerID, UUID preAuthCode, CredentialStatus status, String metadataId, Instant validFrom, Instant validUntil) {
         HashMap<String, Object> offerData = new HashMap<>();
         offerData.put("data", new GsonBuilder().create().toJson(addIllegalClaims(getUniversityCredentialSubjectData())));
         return new CredentialOffer(
@@ -61,9 +61,11 @@ public class CredentialOfferTestData {
                 status,
                 List.of(metadataId),
                 offerData,
+                Map.of("vct#integrity", "sha256-SVHLfKfcZcBrw+d9EL/1EXxvGCdkQ7tMGvZmd0ysMck="),
                 UUID.randomUUID(),
                 Instant.now().plusSeconds(600).getEpochSecond(),
                 UUID.randomUUID(),
+                preAuthCode,
                 (int) Instant.now().plusSeconds(120).getEpochSecond(),
                 validFrom,
                 validUntil,
