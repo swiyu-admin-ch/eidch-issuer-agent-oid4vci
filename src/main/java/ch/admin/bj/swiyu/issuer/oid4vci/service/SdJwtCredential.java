@@ -6,6 +6,17 @@
 
 package ch.admin.bj.swiyu.issuer.oid4vci.service;
 
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static ch.admin.bj.swiyu.issuer.oid4vci.common.exception.CredentialRequestError.INVALID_PROOF;
+import static ch.admin.bj.swiyu.issuer.oid4vci.common.utils.TimeUtils.getUnixTimeStamp;
+import static ch.admin.bj.swiyu.issuer.oid4vci.common.utils.TimeUtils.instantToUnixTimestamp;
+import static java.util.Objects.nonNull;
+
 import ch.admin.bj.swiyu.issuer.oid4vci.common.config.ApplicationProperties;
 import ch.admin.bj.swiyu.issuer.oid4vci.common.config.SdjwtProperties;
 import ch.admin.bj.swiyu.issuer.oid4vci.common.exception.CredentialException;
@@ -18,17 +29,6 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.extern.slf4j.Slf4j;
-
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import static ch.admin.bj.swiyu.issuer.oid4vci.common.exception.CredentialRequestError.INVALID_PROOF;
-import static ch.admin.bj.swiyu.issuer.oid4vci.common.utils.TimeUtils.getUnixTimeStamp;
-import static ch.admin.bj.swiyu.issuer.oid4vci.common.utils.TimeUtils.instantToUnixTimestamp;
-import static java.util.Objects.nonNull;
 
 @Slf4j
 public class SdJwtCredential extends CredentialBuilder {
@@ -95,6 +95,10 @@ public class SdJwtCredential extends CredentialBuilder {
                 // We only log the issue and do not add the claim.
                 log.warn("Upstream application tried to override protected claim {} in credential offer {}. Original value has been retained",
                         entry.getKey(), getCredentialOffer().getId());
+                continue;
+            }
+            if (entry.getValue() == null) {
+                // 20250314 - Despite claiming it works, authlete will crash with a nullpointer when given a null value
                 continue;
             }
             // TODO: EID-1782; Handle mandatory subject fields using issuer metadata
