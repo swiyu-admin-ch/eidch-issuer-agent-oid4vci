@@ -27,6 +27,7 @@ service independently from the management service.
 - [Overview](#Overview)
 - [Deployment](#deployment)
 - [Development](#development)
+- [Known Issues](known-issues)
 - [Contributions and feedback](#contributions-and-feedback)
 - [License](#license)
 
@@ -222,6 +223,10 @@ credential subject data in the offer as JWT with the additional json property `"
 
 Note that faulty data integrity will only be checked on redemption of the credential offer. If the data integrity check
 fails the credential will NOT be issued.
+
+## Known Issues
+
+The swiyu Public Beta Trust Infrastructure was deliberately released at an early stage to enable future ecosystem participants. There may still be minor bugs or security vulnerabilities in the test system. We will publish them in the near future as ‘KnownIssues’ in this repository.
 
 ## Contributions and feedback
 
