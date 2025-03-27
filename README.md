@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 # Generic issuer signing service OID4VCI
 
 This software is a web server implementing the technical standards as specified in
-the [Swiss e-ID and trust infrastructure: Initial implementation](https://swiyu-admin-ch.github.io/initial-technology/).
+the ["Swiss Profile"](https://swiyu-admin-ch.github.io/specifications/interoperability-profile/).
 Together with the other generic components provided, this software forms a collection of APIs allowing issuance and
 verification of verifiable credentials without the need of reimplementing the standards.
 
@@ -27,7 +27,7 @@ service independently from the management service.
 - [Overview](#Overview)
 - [Deployment](#deployment)
 - [Development](#development)
-- [Known Issues](known-issues)
+- [Known Issues](#known-issues)
 - [Contributions and feedback](#contributions-and-feedback)
 - [License](#license)
 
